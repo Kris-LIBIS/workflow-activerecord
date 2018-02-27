@@ -1,6 +1,7 @@
 require 'libis-workflow'
 
 require_relative 'activerecord/version'
+require 'active_record'
 
 module Libis
   module Workflow
@@ -9,8 +10,8 @@ module Libis
       autoload :Base, 'libis/workflow/activerecord/base'
       autoload :Config, 'libis/workflow/activerecord/config'
       autoload :Option, 'libis/workflow/activerecord/option'
+      autoload :Property, 'libis/workflow/activerecord/property'
       autoload :StatusEntry, 'libis/workflow/activerecord/status_entry'
-      autoload :Job, 'libis/workflow/activerecord/job'
       autoload :WorkItem, 'libis/workflow/activerecord/work_item'
       autoload :Run, 'libis/workflow/activerecord/run'
       autoload :Worker, 'libis/workflow/activerecord/worker'
