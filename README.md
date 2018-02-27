@@ -3,7 +3,7 @@
 [![Coverage Status](https://coveralls.io/repos/Kris-LIBIS/workflow-activerecord/badge.png)](https://coveralls.io/r/Kris-LIBIS/workflow-activerecord)
 [![Dependency Status](https://gemnasium.com/Kris-LIBIS/workflow-activerecord.svg)](https://gemnasium.com/Kris-LIBIS/workflow-activerecord)
 
-workflow-acriverecord
-================
+workflow-activerecord
+=====================
 
 ActiveRecord persistence for the workflow framework
