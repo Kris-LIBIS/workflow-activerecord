@@ -2,23 +2,19 @@
 
 require 'rspec'
 require_relative 'spec_helper'
-require 'stringio'
 
 require 'libis-workflow-activerecord'
-require_relative 'test_workitem'
+require 'libis/workflow/activerecord/work_item'
+require 'awesome_print'
 
 describe 'TestWorkItem' do
 
-  before :each do
-    ::Libis::Workflow::ActiveRecord.configure do |cfg|
-      # noinspection RubyResolve
-      cfg.database_connect 'db/config.yml', :test
-      cfg.logger.appenders =
-          ::Logging::Appenders.string_io('StringIO', layout: ::Libis::Tools::Config.get_log_formatter)
-    end
-  end
-
-  describe 'create item' do
-    item = TestWorkItem.create
+  it 'create item' do
+    item = Libis::Workflow::ActiveRecord::WorkItem.create(name: 'Foo')
+    item.properties['name'] = 'Bar'
+    item.save
+    ap item
+    ap item.properties
+    item.save
   end
 end

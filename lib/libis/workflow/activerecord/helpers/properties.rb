@@ -26,6 +26,11 @@ module Libis
             nil
           end
 
+          def to_hash
+            # noinspection RubyResolve
+            item.property_items.to_h
+          end
+
         end
 
         module PropertyHelper

@@ -7,7 +7,7 @@ module Libis
       class StatusEntry < ::ActiveRecord::Base
         include ::Libis::Workflow::ActiveRecord::Base
 
-        belongs_to :item, polymorphic: true
+        belongs_to :work_item, polymorphic: true
       end
 
     end

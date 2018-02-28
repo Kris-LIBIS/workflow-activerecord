@@ -8,6 +8,8 @@ module Libis
 
       class WorkItem < ::ActiveRecord::Base
 
+        self.table_name = 'work_items'
+
         include Libis::Workflow::Base::WorkItem
         include Libis::Workflow::ActiveRecord::Base
         include Libis::Workflow::ActiveRecord::Helpers::PropertyHelper
@@ -70,7 +72,7 @@ module Libis
         end
 
         def properties
-          @property_helper ||= PropertyHelper(self)
+          @property_helper ||= Helpers::Properties.new(self)
         end
 
         def add_item(item)

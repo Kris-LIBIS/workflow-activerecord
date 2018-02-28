@@ -1,3 +1,4 @@
+# noinspection RubyResolve
 require 'singleton'
 require 'active_record'
 
@@ -18,9 +19,9 @@ module Libis
 
       Config.send(:define_method, :database_connect) do |config_file = 'db/config.yml', environment = :production|
 	      db_config = YAML.load_file(config_file)
-        ::ActiveRecord::Base.establish_connection(db_config[environment.to_s])
+        puts db_config[environment.to_s]
         ::ActiveRecord::Base.logger = Libis::Workflow::ActiveRecord::Config.logger
-        nil
+        ::ActiveRecord::Base.establish_connection(db_config[environment.to_s])
       end
 
       Config[:log_dir] = '.'

@@ -8,7 +8,7 @@ module Libis
         include ::Libis::Workflow::ActiveRecord::Base
 
         # noinspection RailsParamDefResolve
-        belongs_to :item, polymorphic: true
+        belongs_to :work_item, polymorphic: true
       end
 
     end
