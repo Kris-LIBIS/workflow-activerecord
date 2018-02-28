@@ -9,9 +9,6 @@ module Libis
 
       autoload :Base, 'libis/workflow/activerecord/base'
       autoload :Config, 'libis/workflow/activerecord/config'
-      autoload :Option, 'libis/workflow/activerecord/option'
-      autoload :Property, 'libis/workflow/activerecord/property'
-      autoload :StatusEntry, 'libis/workflow/activerecord/status_entry'
       autoload :WorkItem, 'libis/workflow/activerecord/work_item'
       autoload :Run, 'libis/workflow/activerecord/run'
       autoload :Worker, 'libis/workflow/activerecord/worker'

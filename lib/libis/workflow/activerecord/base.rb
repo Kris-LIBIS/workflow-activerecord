@@ -10,13 +10,13 @@ module Libis
         def self.included(klass)
           klass.extend(ClassMethods)
 
-          def [](key)
-            self.send(key.to_sym)
-          end
-
-          def []=(key,value)
-            self.send(key.to_s + '=', value)
-          end
+          # def [](key)
+          #   self.send(key.to_sym)
+          # end
+          #
+          # def []=(key,value)
+          #   self.send(key.to_s + '=', value)
+          # end
         end
 
         module ClassMethods

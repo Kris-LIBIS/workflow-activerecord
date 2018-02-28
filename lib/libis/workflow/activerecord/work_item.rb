@@ -1,79 +1,31 @@
 require 'libis-workflow-activerecord'
 
-require_relative 'helpers/properties'
+require_relative 'helpers/hash_serializer'
+require_relative 'helpers/status_serializer'
 
 module Libis
   module Workflow
     module ActiveRecord
 
       class WorkItem < ::ActiveRecord::Base
-
-        self.table_name = 'work_items'
-
         include Libis::Workflow::Base::WorkItem
         include Libis::Workflow::ActiveRecord::Base
-        include Libis::Workflow::ActiveRecord::Helpers::PropertyHelper
 
-        # noinspection RailsParamDefResolve
-        has_many :option_items,
-                 class_name: Libis::Workflow::ActiveRecord::Option.to_s,
-                 as: :work_item,
-                 dependent: :destroy,
-                 autosave: true
-
-        # noinspection RailsParamDefResolve
-        has_many :property_items,
-                 class_name: Libis::Workflow::ActiveRecord::Property.to_s,
-                 as: :work_item,
-                 dependent: :destroy,
-                 autosave: true
-
-        # noinspection RailsParamDefResolve
-        has_many :status_entries,
-                 as: :work_item,
-                 dependent: :destroy,
-                 autosave: true
+        self.table_name = 'work_items'
+        serialize :options, Libis::Workflow::ActiveRecord::Helpers::HashSerializer
+        serialize :properties, Libis::Workflow::ActiveRecord::Helpers::HashSerializer
+        serialize :status_log, Libis::Workflow::ActiveRecord::Helpers::StatusSerializer
 
         # noinspection RailsParamDefResolve
         has_many :items,
                  class_name: Libis::Workflow::ActiveRecord::WorkItem.to_s,
-                 as: :parent,
+                 foreign_key: :parent_id,
                  dependent: :destroy,
                  autosave: true
 
         # noinspection RailsParamDefResolve
         belongs_to :parent,
-                   polymorphic: true
-
-
-        class PropertyHelper
-          attr_reader :item
-
-          def initialize(item)
-            @item = item
-          end
-
-          def [](key)
-            # noinspection RubyResolve
-            property = item.property_items.find_by(name: key)
-            property&.value
-          end
-
-          def []=(key, value)
-            # noinspection RubyResolve
-            property = item.property_items.find_by(name: key)
-            if property
-              old_value = property.value
-              property.value = value
-              return old_value
-            end
-            nil
-          end
-        end
-
-        def properties
-          @property_helper ||= Helpers::Properties.new(self)
-        end
+                   class_name: Libis::Workflow::ActiveRecord::WorkItem.to_s
 
         def add_item(item)
           raise Libis::WorkflowError, 'Trying to add item already linked to another item' unless item.parent.nil?
@@ -104,8 +56,8 @@ module Libis
 
         def add_status_log(info)
           # noinspection RubyResolve
-          self.status_entries.build(info)
-          self.status_entries.last
+          self.status_log << info
+          self.status_log.last
         end
 
       end

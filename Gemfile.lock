@@ -55,7 +55,7 @@ GEM
       roo-xls (~> 1.0)
       simple_xlsx_reader (~> 1.0)
       yard (~> 0.8)
-    libis-workflow (2.0.33)
+    libis-workflow (2.0.34)
       eldritch (~> 1.1)
       libis-tools (~> 0.9)
       sidekiq (~> 4.0)
