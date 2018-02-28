@@ -57,7 +57,7 @@ module Libis
         protected
 
         def volatile_attributes
-          %w'_id c_at'
+          %w'id created_at updated_at'
         end
 
         private

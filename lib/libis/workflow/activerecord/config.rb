@@ -19,7 +19,6 @@ module Libis
 
       Config.send(:define_method, :database_connect) do |config_file = 'db/config.yml', environment = :production|
 	      db_config = YAML.load_file(config_file)
-        puts db_config[environment.to_s]
         ::ActiveRecord::Base.logger = Libis::Workflow::ActiveRecord::Config.logger
         ::ActiveRecord::Base.establish_connection(db_config[environment.to_s])
       end

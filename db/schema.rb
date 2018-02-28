@@ -9,9 +9,12 @@ ActiveRecord::Schema.define do
     t.jsonb :options, null: false, default: {}
     t.jsonb :properties, null: false, default: {}
     t.jsonb :status_log, null: false, default: []
-    t.references :parent#, polymorphic: true
+    t.references :parent, foreign_key: { to_table: :work_items, on_delete: :cascade }
+
+    t.timestamps
   end
 
   add_index :work_items, :status_log, using: :gin
+  # add_foreign_key :work_items, :work_items, column: :parent_id, on_delete: :cascade
 
 end

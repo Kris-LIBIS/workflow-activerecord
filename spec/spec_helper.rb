@@ -13,13 +13,11 @@ require 'stringio'
 RSpec.configure do |cfg|
 
   cfg.before :suite do
-    puts "Before suite"
     ::Libis::Workflow::ActiveRecord.configure do |cfg|
       # cfg.logger.appenders =
       #     ::Logging::Appenders.string_io('StringIO', layout: ::Libis::Tools::Config.get_log_formatter)
       # noinspection RubyResolve
-      result = cfg.database_connect 'db/config.yml', :test
-      puts "DBconnect: #{result}"
+      cfg.database_connect 'db/config.yml', :test
     end
     DatabaseCleaner.clean_with :truncation
   end
