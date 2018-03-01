@@ -310,6 +310,18 @@ describe 'TestWorkItem' do
       new_item.save!
     end
 
+    it 'move' do
+      item = TestWorkItem.where('properties @> ? ', {name: 'Copy of grandchild 1 of 1'}.to_json).first
+      item.name = 'Traveling grandchild'
+      parent = item.parent
+      expect(parent.items.size).to be 1
+      new_parent = TestWorkItem.where('properties @> ? ', {name: 'child 2'}.to_json).first
+      new_parent.move_item item
+      expect(parent.items.size).to be 0
+      expect(new_parent.items.size).to be 1
+      expect(new_parent.items.first.id).to be item.id
+    end
+
     it 'cascade delete' do
       expect(root.items.count).to be 4
       child = TestWorkItem.where('properties @> ? ', {name: 'child 1'}.to_json).first
@@ -318,6 +330,11 @@ describe 'TestWorkItem' do
 
       grandchild = TestWorkItem.where('properties @> ? ', {name: 'grandchild 1 of 1'}.to_json).first
       expect(grandchild).to be_nil
+    end
+
+    it 'get items' do
+      expect(root.get_items).to be_a(ActiveRecord::Relation)
+      expect(root.get_item_list).to  be_a(Array)
     end
 
   end
