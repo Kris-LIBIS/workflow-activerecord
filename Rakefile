@@ -48,7 +48,7 @@ namespace :db do
   end
 
   task :configuration => :environment do
-    @config = YAML.load(File.read(('db/config.yml'))[DATABASE_ENV]
+    @config = YAML.load_file('db/config.yml')[DATABASE_ENV]
   end
 
   task :configure_connection => :configuration do

@@ -305,6 +305,9 @@ describe 'TestWorkItem' do
       expect(new_item.items.size).to be 1
       expect(new_item.items[0]).not_to eql item.items[0]
       expect(new_item.items[0].name).to eql item.items[0].name
+      new_item.name = 'Copy of ' + item.name
+      new_item.items.first.name = 'Copy of ' + item.items.first.name
+      new_item.save!
     end
 
     it 'cascade delete' do
