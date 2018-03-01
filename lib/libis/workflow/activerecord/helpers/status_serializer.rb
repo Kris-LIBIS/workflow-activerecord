@@ -8,7 +8,8 @@ module Libis
         class StatusSerializer
 
           def self.dump(array)
-            array
+            return nil unless array.is_a?(Array) && !array.empty?
+            array || []
           end
 
           def self.load(array)

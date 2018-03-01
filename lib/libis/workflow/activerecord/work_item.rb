@@ -1,3 +1,4 @@
+require 'active_support/core_ext/hash/indifferent_access'
 require 'libis-workflow-activerecord'
 
 require_relative 'helpers/hash_serializer'
@@ -36,16 +37,29 @@ module Libis
           super(item)
         end
 
-        def move_item(item)
-          new_item = item.dup
-          yield new_item, item if block_given?
-          new_item.parent = nil
-          item.get_items.each {|i| new_item.move_item(i)}
-          self.add_item(new_item)
-          if item.parent
-            item.parent.items.delete(item)
-          end
+        def duplicate
+          new_item = self.class.new
+          new_item.properties = {}.with_indifferent_access
+          self.properties.each {|k, v| new_item.properties[k.to_sym] = v.dup}
+          new_item.options = {}.with_indifferent_access
+          self.options.each {|k, v| new_item.options[k.to_sym] = v.dup}
+          new_item.status_log = []
+          yield new_item if block_given?
           new_item
+        end
+
+        def copy_item(item, &block)
+          new_item = item.duplicate &block
+          new_item.parent = nil
+          add_item new_item
+          item.items.each {|i| new_item.copy_item(i)}
+          new_item
+        end
+
+        def move_item(item)
+          item.parent = self
+          item.save
+          item
         end
 
         def get_items
@@ -60,7 +74,7 @@ module Libis
 
         def add_status_log(info)
           # noinspection RubyResolve
-          self.status_log << info
+          self.status_log << info.with_indifferent_access
           self.status_log.last
         end
 

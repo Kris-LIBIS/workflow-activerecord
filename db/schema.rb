@@ -6,9 +6,9 @@ ActiveRecord::Schema.define do
 
   create_table :work_items, force: true do |t|
     t.string :type
-    t.jsonb :options, null: false, default: {}
-    t.jsonb :properties, null: false, default: {}
-    t.jsonb :status_log, null: false, default: []
+    t.jsonb :properties
+    t.jsonb :options
+    t.jsonb :status_log
     t.references :parent, foreign_key: { to_table: :work_items, on_delete: :cascade }
 
     t.timestamps

@@ -1,0 +1,50 @@
+language: ruby
+sudo: false
+bundler_args: --without development
+cache: bundler
+
+rvm:
+  - 2.3.0
+  - 2.4.1
+  - 2.5.0
+  - ruby-head
+  - jruby-9.1.9.0
+  - jruby-head
+jdk:
+  - openjdk8
+  - oraclejdk8
+  - oraclejdk9
+matrix:
+  exclude:
+    - rvm: 2.3.0
+      jdk: oraclejdk8
+    - rvm: 2.3.0
+      jdk: oraclejdk9
+    - rvm: 2.4.1
+      jdk: oraclejdk8
+    - rvm: 2.4.1
+      jdk: oraclejdk9
+    - rvm: 2.5.0
+      jdk: oraclejdk8
+    - rvm: 2.5.0
+      jdk: oraclejdk9
+    - rvm: ruby-head
+      jdk: oraclejdk8
+    - rvm: ruby-head
+      jdk: oraclejdk9
+  allow_failures:
+    - rvm: ruby-head
+    - rvm: jruby-head
+branches:
+  only:
+      - master
+env:
+  global:
+    - JRUBY_OPTS="-Xcli.debug=true --debug"
+addons:
+  postgresql: "9.6"
+services:
+  - postgresql
+before_script:
+  - psql -c 'create database upload;' -U postgres
+  - cp db/travis.config.yml db/config.yml

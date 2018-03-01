@@ -171,6 +171,64 @@ describe 'TestWorkItem' do
 
   end
 
+  context 'copy' do
+
+    # noinspection RubyResolve
+    it 'simple' do
+      item = TestWorkItem.create
+      new_item = item.duplicate
+      expect(new_item.id).to be_nil
+      expect(new_item.properties).to be_empty
+      expect(new_item.options).to be_empty
+      expect(new_item.status_log).to be_empty
+      new_item.save!
+      expect(new_item.id).not_to be_nil
+      expect(new_item.id).not_to eql item.id
+    end
+
+    # noinspection RubyResolve
+    it 'with properties' do
+      item = TestWorkItem.create
+      item.properties['foo'] = 'bar'
+      item.properties['baz'] = 'quux'
+      new_item = item.duplicate
+      expect(new_item.id).to be_nil
+      expect(new_item.properties).not_to be_empty
+      expect(new_item.properties.size).to be 2
+      expect(new_item.properties['foo']).to eql 'bar'
+      expect(new_item.properties[:foo]).not_to be 'bar'
+      expect(new_item.properties[:baz]).to eql 'quux'
+      expect(new_item.properties['baz']).not_to be 'quux'
+      expect(new_item.properties.size).to be 2
+      expect(new_item.options).to be_empty
+      expect(new_item.status_log).to be_empty
+      new_item.save!
+      expect(new_item.id).not_to be_nil
+      expect(new_item.id).not_to eql item.id
+    end
+
+    # noinspection RubyResolve
+    it 'with options' do
+      item = TestWorkItem.create
+      item.options['foo'] = {}
+      item.options[:foo]['bar'] = {}
+      item.options['foo'][:bar]['baz'] = 'quux'
+      new_item = item.duplicate
+      expect(new_item.id).to be_nil
+      expect(new_item.options).not_to be_empty
+      expect(new_item.options.size).to be 1
+      expect(new_item.options['foo'].size).to be 1
+      expect(new_item.options[:foo]['bar'].size).to be 1
+      expect(new_item.options[:foo][:bar][:baz]).to eql 'quux'
+      expect(new_item.properties).to be_empty
+      expect(new_item.status_log).to be_empty
+      new_item.save!
+      expect(new_item.id).not_to be_nil
+      expect(new_item.id).not_to eql item.id
+    end
+
+  end
+
   context 'hierarchy' do
 
     before :context do
@@ -238,10 +296,22 @@ describe 'TestWorkItem' do
       expect(item.parent.parent).to eql root
     end
 
+    it 'deep copy' do
+      item = TestWorkItem.where('properties @> ? ', {name: 'child 1'}.to_json).first
+      expect(item).not_to be_nil
+      new_item = root.copy_item(item)
+      expect(new_item.id).not_to be item.id
+      expect(new_item.parent).to eql item.parent
+      expect(new_item.items.size).to be 1
+      expect(new_item.items[0]).not_to eql item.items[0]
+      expect(new_item.items[0].name).to eql item.items[0].name
+    end
+
     it 'cascade delete' do
+      expect(root.items.count).to be 4
       child = TestWorkItem.where('properties @> ? ', {name: 'child 1'}.to_json).first
       child.destroy
-      expect(root.items.count).to be 2
+      expect(root.items.count).to be 3
 
       grandchild = TestWorkItem.where('properties @> ? ', {name: 'grandchild 1 of 1'}.to_json).first
       expect(grandchild).to be_nil

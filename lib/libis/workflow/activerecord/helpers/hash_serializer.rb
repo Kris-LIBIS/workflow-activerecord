@@ -8,6 +8,7 @@ module Libis
         class HashSerializer
 
           def self.dump(hash)
+            return nil unless hash.is_a?(Hash) && !hash.empty?
             hash
           end
 
