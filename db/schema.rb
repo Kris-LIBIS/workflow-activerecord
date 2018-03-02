@@ -15,6 +15,5 @@ ActiveRecord::Schema.define do
   end
 
   add_index :work_items, :status_log, using: :gin
-  # add_foreign_key :work_items, :work_items, column: :parent_id, on_delete: :cascade
 
 end

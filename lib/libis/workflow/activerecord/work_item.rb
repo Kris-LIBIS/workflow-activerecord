@@ -3,6 +3,7 @@ require 'libis-workflow-activerecord'
 
 require_relative 'helpers/hash_serializer'
 require_relative 'helpers/status_serializer'
+require_relative 'helpers/property_helper'
 
 module Libis
   module Workflow
@@ -11,6 +12,7 @@ module Libis
       class WorkItem < ::ActiveRecord::Base
         include Libis::Workflow::Base::WorkItem
         include Libis::Workflow::ActiveRecord::Base
+        include Libis::Workflow::ActiveRecord::Helpers::PropertyHelper
 
         self.table_name = 'work_items'
         # noinspection RubyArgCount
@@ -29,8 +31,7 @@ module Libis
                  autosave: true
 
         # noinspection RailsParamDefResolve
-        belongs_to :parent,
-                   class_name: Libis::Workflow::ActiveRecord::WorkItem.to_s
+        belongs_to :parent, class_name: Libis::Workflow::ActiveRecord::WorkItem.to_s
 
         def add_item(item)
           raise Libis::WorkflowError, 'Trying to add item already linked to another item' unless item.parent.nil?

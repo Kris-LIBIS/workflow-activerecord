@@ -3,26 +3,27 @@ require 'libis/workflow/activerecord/base'
 
 module Libis
   module Workflow
-    module Mongoid
+    module ActiveRecord
 
       class Job < ::Libis::Workflow::ActiveRecord::Base
 
         include ::Libis::Workflow::Base::Job
 
-        field :name, type: String
-        field :description, type: String
-        field :input, type: Hash, default: -> { Hash.new }
-        field :run_object, type: String
-        field :log_to_file, type: Boolean, default: true
-        field :log_each_run, type: Boolean, default: true
-        field :log_level, type: String, default: 'INFO'
-        field :log_age, type: String, default: 'daily'
-        field :log_keep, type: Integer, default: 5
+        property_field :name
+        property_field :description
+        property_field :input, type: Hash. default: -> { Hash.new }
+        property_field :run_object
+        property_field :log_to_file
+        property_field :log_each_run, type: Boolean, default: true
+        property_field :log_level, default: 'INFO'
+        property_field :log_age, default: 'daily'
+        property_field :log_keep, type: Integer, default: 5
 
         # index({name: 1}, {unique: 1, name: 'by_name'})
 
-        has_many :runs, as: :job, dependent: :destroy, autosave: true, order: :c_at.asc
-        belongs_to :workflow, polymorphic: true
+        has_many :runs, class_name: Libis::Workflow::ActiveRecord::Run.to_s,
+                 as: :job, dependent: :destroy, autosave: true, order: :c_at.asc
+        belongs_to :workflow, class_name: Libis::Workflow::ActiveRecord::Workflow.to_s
 
         # index({workflow_id: 1, workflow_type: 1, name: 1}, {name: 'by_workflow'})
 

@@ -1,5 +1,4 @@
 require 'fileutils'
-
 require 'libis/workflow/base/run'
 
 module Libis
@@ -10,24 +9,22 @@ module Libis
 
         include ::Libis::Workflow::Base::Run
 
-        field :start_date, type: Time, default: -> { Time.now }
-        field :log_to_file, type: Boolean, default: false
-        field :log_level, type: String, default: 'INFO'
-        field :log_filename, type: String
-        field :run_name, type: String
+        property_field :start_date, type: Time, default: lambda {Time.now}
+        property_field :log_to_file, type: Boolean, default: false
+        property_field :log_level, default: 'INFO'
+        property_field :log_filename
+        property_field :run_name
 
-        index({start_date: 1}, {sparse: 1, name: 'by_start'})
+        # noinspection RailsParamDefResolve
+        belongs_to :job, class_name: Libis::Workflow::ActiveRecord::Job.to_s
 
-        belongs_to :job, polymorphic: true
-
-        index({job_id: 1, job_type: 1, start_date: 1}, {sparse: 1, name: 'by_job'})
-
-        set_callback(:destroy, :before) do |document|
-          document.rm_workdir
-          document.rm_log
+        set_callback(:destroy, :before) do |run|
+          run.rm_workdir
+          run.rm_log
         end
 
         def rm_log
+          # noinspection RubyResolve
           log_file = self.log_filename
           FileUtils.rm(log_file) if log_file && !log_file.blank? && File.exist?(log_file)
         end
@@ -39,7 +36,7 @@ module Libis
 
         def work_dir
           # noinspection RubyResolve
-          dir = File.join(Libis::Workflow::Config.workdir, self.id)
+          dir = File.join(Libis::Workflow::Config.workdir, self.id.to_s)
           FileUtils.mkpath dir unless Dir.exist?(dir)
           dir
         end
@@ -48,19 +45,20 @@ module Libis
           self.start_date = Time.now
           self.tasks = []
           super action
-          self.reload
-          self.reload_relations
           close_logger
         end
 
         def logger
+          # noinspection RubyResolve
           unless self.log_to_file
             return self.job.logger
           end
           logger = ::Logging::Repository.instance[self.name]
           return logger if logger
           unless ::Logging::Appenders[self.name]
+            # noinspection RubyResolve
             self.log_filename ||= File.join(::Libis::Workflow::Mongoid::Config[:log_dir], "#{self.name}-#{self.id}.log")
+            # noinspection RubyResolve
             ::Logging::Appenders::File.new(
                 self.name,
                 filename: self.log_filename,
@@ -70,11 +68,13 @@ module Libis
           end
           logger = ::Libis::Workflow::Mongoid::Config.logger(self.name, self.name)
           logger.additive = false
+          # noinspection RubyResolve
           logger.level = self.log_level
           logger
         end
 
         def close_logger
+          # noinspection RubyResolve
           return unless self.log_to_file
           ::Logging::Appenders[self.name].close
           ::Logging::Appenders.remove(self.name)
@@ -84,8 +84,8 @@ module Libis
         def name
           parts = [self.job.name]
           parts << self.run_name unless self.run_name.blank?
-          parts << self.id.generation_time.strftime('%Y%m%d-%H%M%S')
-          parts << self.id.to_s[8..-1] if self.run_name.blank?
+          parts << self.created_at.strftime('%Y%m%d-%H%M%S')
+          parts << self.id.to_s if self.run_name.blank?
           parts.join('-')
         rescue
           self.id.to_s

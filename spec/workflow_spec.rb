@@ -76,6 +76,32 @@ describe 'TestWorkItem' do
       item.save
     end
 
+    # noinspection RubyResolve
+    it 'property_field' do
+      expect(item.properties[:abc]).to be_nil
+      expect(item.abc).to be :xyz
+      item.abc = 'def'
+      item.save
+      expect(item.abc).to be :def
+      expect(item.properties[:abc]).to eql 'def'
+      item.abc = :xyz
+      item.save
+      expect(item.properties[:abc]).to eql 'xyz'
+      expect(item.abc).to be :xyz
+      item.abc = nil
+      item.save
+      expect(item.properties[:abc]).to be_nil
+      expect(item.abc).to be :xyz
+    end
+
+    # noinspection RubyResolve
+    it 'clear all property_fields' do
+      new_item = TestWorkItem.create
+      new_item.abc = 'foo'
+      expect(new_item.abc).to be :foo
+      expect(new_item.propteries.size)
+    end
+
   end
 
   context 'options' do
