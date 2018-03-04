@@ -1,368 +1,202 @@
 # encoding: utf-8
 
 require 'rspec'
-require_relative 'spec_helper'
+require 'stringio'
 
 require 'libis-workflow-activerecord'
-require 'test_workitem'
-require 'awesome_print'
 
-describe 'TestWorkItem' do
+require_relative 'spec_helper'
+require_relative 'test_job'
+require_relative 'test_workflow'
+require_relative 'items'
 
-  let :root do
-    f = Libis::Workflow::ActiveRecord::WorkItem.where('properties @> ?', {name: 'root'}.to_json)
-    return f.first if f.length > 0
-    f = TestWorkItem.new
-    f.properties[:name] = 'root'
-    f.save
-    f
-  end
+$:.unshift File.join(File.dirname(__FILE__), '..', 'lib')
 
-  context 'creation' do
+describe 'TestWorkflow' do
 
-    it 'new item' do
-      item = TestWorkItem.new
-      expect(item.class).to be TestWorkItem
-      expect(item.id).to be_nil
-      item.save
-      expect(item.id).not_to be_nil
-    end
+  dirname = File.absolute_path(File.join(File.dirname(__FILE__), 'items'))
 
-    it 'create item' do
-      item = TestWorkItem.create
-      expect(item.class).to be TestWorkItem
-      expect(item.id).not_to be_nil
-    end
+  let(:logoutput) { ::Libis::Workflow::ActiveRecord::Config.logger.appenders.first.sio }
 
-  end
+  let(:workflow) {
+    wf = TestWorkflow.find_or_initialize_by(name: 'TestWorkflow')
+    wf.configure(
+        'name' => 'TestWorkflow',
+        'description' => 'Workflow for testing',
+        'tasks' => [
+            {'class' => 'CollectFiles', 'recursive' => true},
+            {
+                'name' => 'ProcessFiles',
+                'subitems' => true,
+                'tasks' => [
+                    {'class' => 'ChecksumTester', 'recursive' => true},
+                    {'class' => 'CamelizeName', 'recursive' => true}
+                ]
+            }
+        ],
+        'input' => {
+            'dirname' => {'default' => '.', 'propagate_to' => 'CollectFiles#location'},
+            'checksum_type' => {'default' => 'SHA1', 'propagate_to' => 'ProcessFiles/ChecksumTester'}
+        }
+    )
+    wf.save!
+    wf
+  }
+  let(:job) {
+    job = TestJob.from_hash(
+        'name' => 'TestJob',
+        'description' => 'Job for testing',
+        'workflow' => workflow,
+        'run_object' => 'TestRun',
+        'input' => {'dirname' => dirname, 'checksum_type' => 'SHA256'},
+        'log_to_file' => false,
+        'log_each_run' => false
+    )
 
-  context 'properties' do
-
-    before :context do
-      @item = TestWorkItem.create
-    end
-
-    after :context do
-      # @item.delete
-    end
-
-    let(:item) { @item }
-
-    # noinspection RubyResolve
-    it 'empty on creation' do
-      expect(item.properties).to be_a Hash
-      expect(item.properties).to be_empty
-    end
-
-    it 'can add property fields with indifferent access' do
-      item.properties['name'] = 'Foo'
-      expect(item.properties['name']).to eql 'Foo'
-      expect(item.properties[:name]).to eql 'Foo'
-
-      item.properties[:label] = 'Bar'
-      expect(item.properties[:label]).to eql 'Bar'
-      expect(item.properties['label']).to eql 'Bar'
-
-      # name and label are special properties
-      expect(item.name).to eql 'Foo'
-      expect(item.label).to eql 'Bar'
-
-      item.name = 'Baz'
-      expect(item.properties['name']).to eql 'Baz'
-
-      item.label = 'Quux'
-      expect(item.properties[:label]).to eql 'Quux'
-
-      item.save
-    end
+    # job = TestJob.find_or_initialize_by(name: 'TestJob')
+    # job.configure(
+    #     'name' => 'TestJob',
+    #     'description' => 'Job for testing',
+    #     'workflow' => workflow,
+    #     'run_object' => 'TestRun',
+    #     'input' => {'dirname' => dirname, 'checksum_type' => 'SHA256'},
+    #     'log_to_file' => false
+    # )
 
     # noinspection RubyResolve
-    it 'property_field' do
-      expect(item.properties[:abc]).to be_nil
-      expect(item.abc).to be :xyz
-      item.abc = 'def'
-      item.save
-      expect(item.abc).to be :def
-      expect(item.properties[:abc]).to eql 'def'
-      item.abc = :xyz
-      item.save
-      expect(item.properties[:abc]).to eql 'xyz'
-      expect(item.abc).to be :xyz
-      item.abc = nil
-      item.save
-      expect(item.properties[:abc]).to be_nil
-      expect(item.abc).to be :xyz
-    end
+    job.runs.each { |run| run.destroy! }
+    job.save!
+    job
+  }
 
-    # noinspection RubyResolve
-    it 'clear all property_fields' do
-      new_item = TestWorkItem.create
-      new_item.abc = 'foo'
-      expect(new_item.abc).to be :foo
-      expect(new_item.propteries.size)
-    end
+  let(:run) { job.execute }
+
+  it 'should contain three tasks' do
+
+    expect(workflow.config['tasks'].size).to eq 2
+    expect(workflow.config['tasks'].first['class']).to eq 'CollectFiles'
+    expect(workflow.config['tasks'].last['name']).to eq 'ProcessFiles'
 
   end
 
-  context 'options' do
+  it 'should camelize the workitem name' do
 
-    before :context do
-      @item = TestWorkItem.create
+    expect(run.options['CollectFiles']['location']).to eq dirname
+
+    expect(run.items.size).to eq 1
+    expect(run.items.count).to eq 1
+    expect(run.size).to eq 1
+    expect(run.count).to eq 1
+    expect(run.items.first.class).to eq TestDirItem
+    expect(run.first.class).to eq TestDirItem
+    expect(run.first.items.size).to eq 4
+    expect(run.first.items.count).to eq 4
+    expect(run.first.size).to eq 4
+    expect(run.first.count).to eq 4
+    expect(run.first.items.first.class).to eq TestFileItem
+    expect(run.first.first.class).to eq TestFileItem
+
+    run.items.first.each_with_index do |x, i|
+      expect(x.name).to eq %w'TestDirItem.rb TestFileItem.rb TestItem.rb TestRun.rb'[i]
     end
-
-    after :context do
-      # @item.delete
-    end
-
-    let(:item) { @item }
-
-    it 'add with indifferent access' do
-      item.options['foo'] = 'bar'
-      expect(item.options['foo']).to eql 'bar'
-      expect(item.options[:foo]).to eql 'bar'
-
-      item.options[:baz] = 'quux'
-      expect(item.options[:baz]).to eql 'quux'
-      expect(item.options['baz']).to eql 'quux'
-
-      item.save
-    end
-
-    it 'multilevel with indifferent access' do
-      item.options[:quux] = {}
-      item.options[:quux]['foo'] = 'bar'
-      expect(item.options['quux']['foo']).to eql 'bar'
-      expect(item.options[:quux][:foo]).to eql 'bar'
-
-      item.options['quux'][:baz] = 'quux'
-      expect(item.options['quux'][:baz]).to eql 'quux'
-      expect(item.options[:quux]['baz']).to eql 'quux'
-
-      item.save
-    end
-
   end
 
-  context 'status' do
+  it 'should return expected debug output' do
 
-    before :context do
-      @item = TestWorkItem.create
-    end
+    run
 
-    after :context do
-      # @item.delete
-    end
+    sample_out = <<STR
+Run - TestRun : Ingest run started.
+Run - TestRun : Running subtask (1/2): CollectFiles
+CollectFiles - TestRun : Processing subitem (1/1): items
+CollectFiles - items : Processing subitem (1/4): test_dir_item.rb
+CollectFiles - items : Processing subitem (2/4): test_file_item.rb
+CollectFiles - items : Processing subitem (3/4): test_item.rb
+CollectFiles - items : Processing subitem (4/4): test_run.rb
+CollectFiles - items : 4 of 4 subitems passed
+CollectFiles - TestRun : 1 of 1 subitems passed
+Run - TestRun : Running subtask (2/2): ProcessFiles
+ProcessFiles - TestRun : Running subtask (1/2): ChecksumTester
+ProcessFiles/ChecksumTester - TestRun : Processing subitem (1/1): items
+ProcessFiles/ChecksumTester - items : Processing subitem (1/4): test_dir_item.rb
+ProcessFiles/ChecksumTester - items : Processing subitem (2/4): test_file_item.rb
+ProcessFiles/ChecksumTester - items : Processing subitem (3/4): test_item.rb
+ProcessFiles/ChecksumTester - items : Processing subitem (4/4): test_run.rb
+ProcessFiles/ChecksumTester - items : 4 of 4 subitems passed
+ProcessFiles/ChecksumTester - TestRun : 1 of 1 subitems passed
+ProcessFiles - TestRun : Running subtask (2/2): CamelizeName
+ProcessFiles/CamelizeName - TestRun : Processing subitem (1/1): items
+ProcessFiles/CamelizeName - Items : Processing subitem (1/4): test_dir_item.rb
+ProcessFiles/CamelizeName - Items : Processing subitem (2/4): test_file_item.rb
+ProcessFiles/CamelizeName - Items : Processing subitem (3/4): test_item.rb
+ProcessFiles/CamelizeName - Items : Processing subitem (4/4): test_run.rb
+ProcessFiles/CamelizeName - Items : 4 of 4 subitems passed
+ProcessFiles/CamelizeName - TestRun : 1 of 1 subitems passed
+ProcessFiles - TestRun : Done
+Run - TestRun : Done
+STR
 
-    let(:item) { @item }
+    sample_out = sample_out.lines.to_a
+    output = logoutput.string.lines
 
-    it 'added' do
-      item.set_status('abc', :STARTED)
-      expect(item.status_log.size).to be 1
-      status_entry = item.status_log[0]
-      expect(status_entry[:task]).to eql 'abc'
-      expect(status_entry[:status]).to be :STARTED
-      expect(item.check_status(:STARTED, 'abc')).to be_truthy
-    end
+    # puts output
 
-    it 'updated' do
-      item.set_status('abc', :DONE)
-      expect(item.status_log.size).to be 1
-      status_entry = item.status_log[0]
-      expect(status_entry[:task]).to eql 'abc'
-      expect(status_entry[:status]).to be :DONE
-      expect(item.check_status(:DONE, 'abc')).to be_truthy
-    end
+    expect(run.status_log.count).to eq 5
+    item = run.items.first
+    expect(item.status_log.count).to eq 3
 
-    context 'with progress' do
-
-      it 'created' do
-        item.set_status('def', :STARTED)
-        expect(item.status_log.size).to be 2
-        status_entry = item.status_log[1]
-        expect(status_entry[:task]).to eql 'def'
-        expect(status_entry[:status]).to be :STARTED
-        expect(item.check_status(:STARTED, 'def')).to be_truthy
-      end
-
-      it 'updated' do
-        item.status_progress('def', 3, 10)
-        expect(item.status_log.size).to be 2
-        status_entry = item.status_log[1]
-        expect(status_entry[:task]).to eql 'def'
-        expect(status_entry[:status]).to be :STARTED
-        expect(status_entry[:progress]).to be 3
-        expect(status_entry[:max]).to be 10
-      end
+    expect(output.count).to eq sample_out.count
+    output.each_with_index do |o, i|
+      expect(o.strip).to match(/#{Regexp.escape sample_out[i].strip}$/)
     end
 
   end
 
-  context 'copy' do
-
-    # noinspection RubyResolve
-    it 'simple' do
-      item = TestWorkItem.create
-      new_item = item.duplicate
-      expect(new_item.id).to be_nil
-      expect(new_item.properties).to be_empty
-      expect(new_item.options).to be_empty
-      expect(new_item.status_log).to be_empty
-      new_item.save!
-      expect(new_item.id).not_to be_nil
-      expect(new_item.id).not_to eql item.id
-    end
-
-    # noinspection RubyResolve
-    it 'with properties' do
-      item = TestWorkItem.create
-      item.properties['foo'] = 'bar'
-      item.properties['baz'] = 'quux'
-      new_item = item.duplicate
-      expect(new_item.id).to be_nil
-      expect(new_item.properties).not_to be_empty
-      expect(new_item.properties.size).to be 2
-      expect(new_item.properties['foo']).to eql 'bar'
-      expect(new_item.properties[:foo]).not_to be 'bar'
-      expect(new_item.properties[:baz]).to eql 'quux'
-      expect(new_item.properties['baz']).not_to be 'quux'
-      expect(new_item.properties.size).to be 2
-      expect(new_item.options).to be_empty
-      expect(new_item.status_log).to be_empty
-      new_item.save!
-      expect(new_item.id).not_to be_nil
-      expect(new_item.id).not_to eql item.id
-    end
-
-    # noinspection RubyResolve
-    it 'with options' do
-      item = TestWorkItem.create
-      item.options['foo'] = {}
-      item.options[:foo]['bar'] = {}
-      item.options['foo'][:bar]['baz'] = 'quux'
-      new_item = item.duplicate
-      expect(new_item.id).to be_nil
-      expect(new_item.options).not_to be_empty
-      expect(new_item.options.size).to be 1
-      expect(new_item.options['foo'].size).to be 1
-      expect(new_item.options[:foo]['bar'].size).to be 1
-      expect(new_item.options[:foo][:bar][:baz]).to eql 'quux'
-      expect(new_item.properties).to be_empty
-      expect(new_item.status_log).to be_empty
-      new_item.save!
-      expect(new_item.id).not_to be_nil
-      expect(new_item.id).not_to eql item.id
-    end
-
+  it 'find workflow' do
+    workflow
+    wf = TestWorkflow.first
+    expect(wf.nil?).to eq false
+    expect(wf.name).to eq 'TestWorkflow'
+    expect(wf.description).to eq 'Workflow for testing'
+    expect(wf.input.count).to eq 2
+    expect(wf.input[:dirname][:default]).to eq '.'
+    expect(wf.config['tasks'].count).to eq 2
+    expect(wf.config['tasks'][0]['class']).to eq 'CollectFiles'
+    expect(wf.config['tasks'][0]['recursive']).to eq true
+    expect(wf.config['tasks'][1]['name']).to eq 'ProcessFiles'
+    expect(wf.config['tasks'][1]['subitems']).to eq true
+    expect(wf.config['tasks'][1]['tasks'].count).to eq 2
+    expect(wf.config['tasks'][1]['tasks'][0]['class']).to eq 'ChecksumTester'
+    expect(wf.config['tasks'][1]['tasks'][0]['recursive']).to eq true
+    expect(wf.config['tasks'][1]['tasks'][1]['class']).to eq 'CamelizeName'
+    expect(wf.config['tasks'][1]['tasks'][1]['recursive']).to eq true
   end
 
-  context 'hierarchy' do
+  # noinspection RubyResolve
+  it 'find run' do
+    run
+    my_job = TestJob.first
+    expect(my_job).to eq job
+    expect(my_job.runs.all.count).to eq 1
+    my_run = my_job.runs.all.first
+    expect(my_run).to eq run
+    expect(my_run.status).to eq :DONE
+  end
 
-    before :context do
-      @item = TestWorkItem.create
-      @item.name = 'root'
-    end
+  # noinspection RubyResolve
+  it 'find first item' do
+    item = run.items.first
+    expect(item.nil?).to eq false
+    expect(item.is_a? TestDirItem).to eq true
+    expect(item.properties['name']).to eq 'Items'
+  end
 
-    after :context do
-      # @item.delete
-    end
-
-    let(:root) { @item }
-
-    it 'child via set parent' do
-      item = TestWorkItem.new
-      item.properties[:name] = 'child 1'
-      item.parent = root
-      expect(item.id).to be_nil
-      item.save
-      expect(item.id).not_to be_nil
-      # noinspection RubyResolve
-      expect(item.parent_id).to be root.id
-      expect(item.parent).to be root
-      expect(root.items.size).to be 1
-      expect(root.items.first).to eql item
-    end
-
-    it 'child via <<' do
-      item = TestWorkItem.new
-      item.properties[:name] = 'child 2'
-      root << item
-      expect(item.id).not_to be_nil
-      # noinspection RubyResolve
-      expect(item.parent_id).to be root.id
-      expect(item.parent).to be root
-      expect(root.items.size).to be 2
-      expect(root.items.last).to eql item
-    end
-
-    it 'child via add_item' do
-      item = TestWorkItem.new
-      item.properties[:name] = 'child 3'
-      root.add_item item
-      expect(item.id).not_to be_nil
-      # noinspection RubyResolve
-      expect(item.parent_id).to be root.id
-      expect(item.parent).to eql root
-      expect(root.items.size).to be 3
-      expect(root.items[2]).to eql item
-    end
-
-    it 'grandchild via set parent' do
-      item = TestWorkItem.new
-      item.properties[:name] = 'grandchild 1 of 1'
-      parent = TestWorkItem.where('properties @> ? ', {name: 'child 1'}.to_json).first
-      item.parent = parent
-      expect(item.id).to be_nil
-      item.save
-      expect(item.id).not_to be_nil
-      # noinspection RubyResolve
-      expect(item.parent_id).to be parent.id
-      expect(item.parent).to be parent
-      expect(parent.items.size).to be 1
-      expect(parent.items.first).to eql item
-      expect(item.parent.parent).to eql root
-    end
-
-    it 'deep copy' do
-      item = TestWorkItem.where('properties @> ? ', {name: 'child 1'}.to_json).first
-      expect(item).not_to be_nil
-      new_item = root.copy_item(item)
-      expect(new_item.id).not_to be item.id
-      expect(new_item.parent).to eql item.parent
-      expect(new_item.items.size).to be 1
-      expect(new_item.items[0]).not_to eql item.items[0]
-      expect(new_item.items[0].name).to eql item.items[0].name
-      new_item.name = 'Copy of ' + item.name
-      new_item.items.first.name = 'Copy of ' + item.items.first.name
-      new_item.save!
-    end
-
-    it 'move' do
-      item = TestWorkItem.where('properties @> ? ', {name: 'Copy of grandchild 1 of 1'}.to_json).first
-      item.name = 'Traveling grandchild'
-      parent = item.parent
-      expect(parent.items.size).to be 1
-      new_parent = TestWorkItem.where('properties @> ? ', {name: 'child 2'}.to_json).first
-      new_parent.move_item item
-      expect(parent.items.size).to be 0
-      expect(new_parent.items.size).to be 1
-      expect(new_parent.items.first.id).to be item.id
-    end
-
-    it 'cascade delete' do
-      expect(root.items.count).to be 4
-      child = TestWorkItem.where('properties @> ? ', {name: 'child 1'}.to_json).first
-      child.destroy
-      expect(root.items.count).to be 3
-
-      grandchild = TestWorkItem.where('properties @> ? ', {name: 'grandchild 1 of 1'}.to_json).first
-      expect(grandchild).to be_nil
-    end
-
-    it 'get items' do
-      expect(root.get_items).to be_a(ActiveRecord::Relation)
-      expect(root.get_item_list).to  be_a(Array)
-    end
-
+  it 'move item in relation' do
+    item = run.items.first
+    sub_item = item.items.first
+    run.move_item(sub_item)
+    expect(run.size).to eq 2
+    expect(item.size).to eq 3
   end
 
 end

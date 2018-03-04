@@ -44,10 +44,9 @@ module Libis
 
         def to_hash
           result = self.attributes.reject { |k, v| v.blank? || volatile_attributes.include?(k) }
-          result = result.to_yaml.gsub(/!ruby\/hash:BSON::Document/, '')
+          result = result.to_yaml
           # noinspection RubyResolve
-          result = YAML.load(result)
-          result.key_strings_to_symbols!(recursive: true)
+          YAML.load(result)
         end
 
         def to_s

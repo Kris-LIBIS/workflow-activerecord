@@ -27,7 +27,6 @@ module Libis
                  -> {order('id')},
                  class_name: Libis::Workflow::ActiveRecord::WorkItem.to_s,
                  foreign_key: :parent_id,
-                 # dependent: :destroy,
                  autosave: true
 
         # noinspection RailsParamDefResolve

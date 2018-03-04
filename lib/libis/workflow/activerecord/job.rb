@@ -9,18 +9,7 @@ module Libis
 
         include ::Libis::Workflow::Base::Job
 
-        property_field :name
-        property_field :description
-        property_field :input, type: Hash. default: -> { Hash.new }
-        property_field :run_object
-        property_field :log_to_file
-        property_field :log_each_run, type: Boolean, default: true
-        property_field :log_level, default: 'INFO'
-        property_field :log_age, default: 'daily'
-        property_field :log_keep, type: Integer, default: 5
-
-        # index({name: 1}, {unique: 1, name: 'by_name'})
-
+        # noinspection RailsParamDefResolve
         has_many :runs, class_name: Libis::Workflow::ActiveRecord::Run.to_s,
                  as: :job, dependent: :destroy, autosave: true, order: :c_at.asc
         belongs_to :workflow, class_name: Libis::Workflow::ActiveRecord::Workflow.to_s
