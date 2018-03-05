@@ -97,7 +97,7 @@ describe 'TestWorkItem' do
       new_item = TestWorkItem.create
       new_item.abc = 'foo'
       expect(new_item.abc).to be :foo
-      expect(new_item.propteries.size)
+      expect(new_item.properties.size)
     end
 
   end

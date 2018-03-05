@@ -10,13 +10,14 @@ module Libis
         include ::Libis::Workflow::Base::Run
 
         property_field :start_date, type: Time, default: lambda {Time.now}
-        property_field :log_to_file, type: Boolean, default: false
+        property_field :log_to_file, type: TrueClass, default: false
         property_field :log_level, default: 'INFO'
         property_field :log_filename
         property_field :run_name
 
         # noinspection RailsParamDefResolve
-        belongs_to :job, class_name: Libis::Workflow::ActiveRecord::Job.to_s
+        belongs_to :job, class_name: Libis::Workflow::ActiveRecord::Job.to_s,
+                 autosave: true
 
         set_callback(:destroy, :before) do |run|
           run.rm_workdir
@@ -57,16 +58,16 @@ module Libis
           return logger if logger
           unless ::Logging::Appenders[self.name]
             # noinspection RubyResolve
-            self.log_filename ||= File.join(::Libis::Workflow::Mongoid::Config[:log_dir], "#{self.name}-#{self.id}.log")
+            self.log_filename ||= File.join(::Libis::Workflow::ActiveRecord::Config[:log_dir], "#{self.name}-#{self.id}.log")
             # noinspection RubyResolve
             ::Logging::Appenders::File.new(
                 self.name,
                 filename: self.log_filename,
-                layout: ::Libis::Workflow::Mongoid::Config.get_log_formatter,
+                layout: ::Libis::Workflow::ActiveRecord::Config.get_log_formatter,
                 level: self.log_level
             )
           end
-          logger = ::Libis::Workflow::Mongoid::Config.logger(self.name, self.name)
+          logger = ::Libis::Workflow::ActiveRecord::Config.logger(self.name, self.name)
           logger.additive = false
           # noinspection RubyResolve
           logger.level = self.log_level

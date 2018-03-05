@@ -6,4 +6,8 @@
 workflow-activerecord
 =====================
 
-ActiveRecord persistence for the workflow framework
+ActiveRecord persistence for the workflow framework.
+
+Note: This gem only supports Postgres and MySql as it needs support for json data type in the DB.
+When - and if - the sqlite3 adapter adds support for the sqlite JSON1 extension, this gem
+is expected to support sqlite as well.

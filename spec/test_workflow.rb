@@ -2,5 +2,5 @@
 
 require 'libis/workflow/activerecord/workflow'
 
-class TestWorkflow < ::Libis::Workflow::Mongoid::Workflow
+class TestWorkflow < ::Libis::Workflow::ActiveRecord::Workflow
 end

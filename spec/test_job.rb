@@ -2,5 +2,5 @@
 
 require 'libis/workflow/activerecord/job'
 
-class TestJob < ::Libis::Workflow::Mongoid::Job
+class TestJob < ::Libis::Workflow::ActiveRecord::Job
 end

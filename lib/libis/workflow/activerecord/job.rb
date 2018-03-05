@@ -5,32 +5,37 @@ module Libis
   module Workflow
     module ActiveRecord
 
-      class Job < ::Libis::Workflow::ActiveRecord::Base
-
+      class Job < ::ActiveRecord::Base
         include ::Libis::Workflow::Base::Job
+        include ::Libis::Workflow::ActiveRecord::Base
 
         # noinspection RailsParamDefResolve
-        has_many :runs, class_name: Libis::Workflow::ActiveRecord::Run.to_s,
-                 as: :job, dependent: :destroy, autosave: true, order: :c_at.asc
-        belongs_to :workflow, class_name: Libis::Workflow::ActiveRecord::Workflow.to_s
+        has_many :runs, -> {order 'created_at asc'},
+                 class_name: Libis::Workflow::ActiveRecord::Run.to_s,
+                 foreign_key: :job_id,
+                 autosave: true
+        # noinspection RailsParamDefResolve
+        belongs_to :workflow, class_name: Libis::Workflow::ActiveRecord::Workflow.to_s,
+                 autosave: true
 
         # index({workflow_id: 1, workflow_type: 1, name: 1}, {name: 'by_workflow'})
 
         def self.from_hash(hash)
           self.create_from_hash(hash, [:name]) do |item, cfg|
-            item.workflow = Libis::Workflow::Mongoid::Workflow.from_hash(name: cfg.delete('workflow'))
+            item.workflow = Libis::Workflow::ActiveRecord::Workflow.from_hash(name: cfg.delete('workflow'))
           end
         end
 
         def logger
-          return ::Libis::Workflow::Mongoid::Config.logger unless self.log_to_file
+          # noinspection RubyResolve
+          return ::Libis::Workflow::ActiveRecord::Config.logger unless self.log_to_file
           logger = ::Logging::Repository.instance[self.name]
           return logger if logger
           unless ::Logging::Appenders[self.name]
             ::Logging::Appenders::RollingFile.new(
                 self.name,
-                filename: File.join(::Libis::Workflow::Mongoid::Config[:log_dir], "#{self.name}.{{%Y%m%d}}.log"),
-                layout: ::Libis::Workflow::Mongoid::Config.get_log_formatter,
+                filename: File.join(::Libis::Workflow::ActiveRecord::Config[:log_dir], "#{self.name}.{{%Y%m%d}}.log"),
+                layout: ::Libis::Workflow::ActiveRecord::Config.get_log_formatter,
                 truncate: true,
                 age: self.log_age,
                 keep: self.log_keep,
@@ -38,7 +43,7 @@ module Libis
                 level: self.log_level
             )
           end
-          logger = ::Libis::Workflow::Mongoid::Config.logger(self.name, self.name)
+          logger = ::Libis::Workflow::ActiveRecord::Config.logger(self.name, self.name)
           logger.additive = false
           logger
         end

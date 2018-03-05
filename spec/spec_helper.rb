@@ -13,10 +13,13 @@ require 'stringio'
 RSpec.configure do |cfg|
 
   cfg.before :suite do
+    # noinspection RubyResolve
     ::Libis::Workflow::ActiveRecord.configure do |cfg|
-      # cfg.logger.appenders =
-      #     ::Logging::Appenders.string_io('StringIO', layout: ::Libis::Tools::Config.get_log_formatter)
-      # noinspection RubyResolve
+      cfg.logger.appenders =
+          ::Logging::Appenders.string_io('StringIO', layout: ::Libis::Tools::Config.get_log_formatter)
+      cfg.itemdir = File.join(File.dirname(__FILE__), 'items')
+      cfg.taskdir = File.join(File.dirname(__FILE__), 'tasks')
+      cfg.workdir = File.join(File.dirname(__FILE__), 'work')
       cfg.database_connect 'db/config.yml', :test
     end
     DatabaseCleaner.clean_with :truncation

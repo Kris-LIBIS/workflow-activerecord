@@ -38,13 +38,14 @@ development:
   #   debug5, debug4, debug3, debug2, debug1,
   #   log, notice, warning, error, fatal, and panic
   # Defaults to warning.
-  min_messages: log
+  min_messages: debug5
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
 test:
   <<: *default
+  min_messages: warning
 
 # As with config/secrets.yml, you never want to store sensitive information,
 # like your database password, in your source code. If your source code is
@@ -67,15 +68,4 @@ test:
 #
 production:
   <<: *default
-
-#test:
-#  adapter: 'sqlite3'
-#  database: 'workflow_test.db'
-#
-#development:
-#  adapter: 'sqlite3'
-#  database: 'workflow_dev.db'
-#
-#production:
-#  adapter: 'sqlite3'
-#  database: 'workflow.db'
+  min_messages: warning

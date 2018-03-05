@@ -30,7 +30,9 @@ module Libis
                  autosave: true
 
         # noinspection RailsParamDefResolve
-        belongs_to :parent, class_name: Libis::Workflow::ActiveRecord::WorkItem.to_s
+        belongs_to :parent, class_name: Libis::Workflow::ActiveRecord::WorkItem.to_s,
+                   inverse_of: :items,
+                   autosave: true
 
         def add_item(item)
           raise Libis::WorkflowError, 'Trying to add item already linked to another item' unless item.parent.nil?
@@ -57,8 +59,11 @@ module Libis
         end
 
         def move_item(item)
+          old_parent = item.parent
           item.parent = self
           item.save
+          old_parent.items.reset
+          self.items.reset
           item
         end
 

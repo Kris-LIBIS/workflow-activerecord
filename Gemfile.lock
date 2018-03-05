@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    libis-workflow-activerecord (2.0.0)
+    libis-workflow-activerecord (0.8.0)
       activerecord (~> 5)
       libis-workflow (~> 2.0)
       pg

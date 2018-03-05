@@ -2,23 +2,35 @@ ActiveRecord::Schema.define do
   self.verbose = true
 
   enable_extension 'plpgsql'
+
   # enable_extension 'pgcrypto'
 
-  create_table :workflows, force: true do |t|
+  create_table :workflows, force: :cascade do |t|
+    t.string :type
     t.string :name
     t.text :description
-    t.jsonb :config, default: {}
+    if ActiveRecord::Base.connection.instance_values["config"][:adapter] == "postgresql"
+      t.jsonb :config, default: {}
+    else
+      t.json :config, default: {}
+    end
 
     t.timestamps
   end
 
-  add_index :workflows, :config, using: :gin
+  if ActiveRecord::Base.connection.instance_values["config"][:adapter] == "postgresql"
+    add_index :workflows, :config, using: :gin
+  end
 
-  create_table :jobs, force: true do |t|
+  create_table :jobs, force: :cascade do |t|
     t.string :type
     t.string :name
     t.text :description
-    t.jsonb :input, default: {}
+    if ActiveRecord::Base.connection.instance_values["config"][:adapter] == "postgresql"
+      t.jsonb :input, default: {}
+    else
+      t.json :input, default: {}
+    end
     t.string :run_object
     t.boolean :log_to_file, default: true
     t.boolean :log_each_run, default: true
@@ -33,16 +45,28 @@ ActiveRecord::Schema.define do
     t.integer :workflow_id
   end
 
-  create_table :work_items, force: true do |t|
+  if ActiveRecord::Base.connection.instance_values["config"][:adapter] == "postgresql"
+    add_index :jobs, :input, using: :gin
+  end
+
+  create_table :work_items, force: :cascade do |t|
     t.string :type
-    t.jsonb :properties
-    t.jsonb :options
-    t.jsonb :status_log
+    if ActiveRecord::Base.connection.instance_values["config"][:adapter] == "postgresql"
+      t.jsonb :properties
+      t.jsonb :options
+      t.jsonb :status_log
+    else
+      t.json :properties
+      t.json :options
+      t.json :status_log
+    end
     t.references :parent, foreign_key: {to_table: :work_items, on_delete: :cascade}
     t.references :job, foreign_key: {to_table: :jobs, on_delete: :cascade}
     t.timestamps
   end
 
-  add_index :work_items, :status_log, using: :gin
+  if ActiveRecord::Base.connection.instance_values["config"][:adapter] == "postgresql"
+    add_index :work_items, :status_log, using: :gin
+  end
 
 end

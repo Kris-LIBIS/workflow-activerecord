@@ -10,9 +10,13 @@ require_relative 'test_job'
 require_relative 'test_workflow'
 require_relative 'items'
 
-$:.unshift File.join(File.dirname(__FILE__), '..', 'lib')
+require 'awesome_print'
 
 describe 'TestWorkflow' do
+
+  before :each do
+    ::Libis::Workflow::ActiveRecord::Config.logger.appenders.first.clear
+  end
 
   dirname = File.absolute_path(File.join(File.dirname(__FILE__), 'items'))
 
@@ -46,7 +50,7 @@ describe 'TestWorkflow' do
     job = TestJob.from_hash(
         'name' => 'TestJob',
         'description' => 'Job for testing',
-        'workflow' => workflow,
+        'workflow' => 'TestWorkflow',
         'run_object' => 'TestRun',
         'input' => {'dirname' => dirname, 'checksum_type' => 'SHA256'},
         'log_to_file' => false,
@@ -77,6 +81,26 @@ describe 'TestWorkflow' do
     expect(workflow.config['tasks'].first['class']).to eq 'CollectFiles'
     expect(workflow.config['tasks'].last['name']).to eq 'ProcessFiles'
 
+  end
+
+  it 'find workflow' do
+    workflow
+    wf = TestWorkflow.first
+    expect(wf.nil?).to eq false
+    expect(wf.name).to eq 'TestWorkflow'
+    expect(wf.description).to eq 'Workflow for testing'
+    expect(wf.input.count).to eq 2
+    expect(wf.input[:dirname][:default]).to eq '.'
+    expect(wf.config['tasks'].count).to eq 2
+    expect(wf.config['tasks'][0]['class']).to eq 'CollectFiles'
+    expect(wf.config['tasks'][0]['recursive']).to eq true
+    expect(wf.config['tasks'][1]['name']).to eq 'ProcessFiles'
+    expect(wf.config['tasks'][1]['subitems']).to eq true
+    expect(wf.config['tasks'][1]['tasks'].count).to eq 2
+    expect(wf.config['tasks'][1]['tasks'][0]['class']).to eq 'ChecksumTester'
+    expect(wf.config['tasks'][1]['tasks'][0]['recursive']).to eq true
+    expect(wf.config['tasks'][1]['tasks'][1]['class']).to eq 'CamelizeName'
+    expect(wf.config['tasks'][1]['tasks'][1]['recursive']).to eq true
   end
 
   it 'should camelize the workitem name' do
@@ -152,26 +176,6 @@ STR
 
   end
 
-  it 'find workflow' do
-    workflow
-    wf = TestWorkflow.first
-    expect(wf.nil?).to eq false
-    expect(wf.name).to eq 'TestWorkflow'
-    expect(wf.description).to eq 'Workflow for testing'
-    expect(wf.input.count).to eq 2
-    expect(wf.input[:dirname][:default]).to eq '.'
-    expect(wf.config['tasks'].count).to eq 2
-    expect(wf.config['tasks'][0]['class']).to eq 'CollectFiles'
-    expect(wf.config['tasks'][0]['recursive']).to eq true
-    expect(wf.config['tasks'][1]['name']).to eq 'ProcessFiles'
-    expect(wf.config['tasks'][1]['subitems']).to eq true
-    expect(wf.config['tasks'][1]['tasks'].count).to eq 2
-    expect(wf.config['tasks'][1]['tasks'][0]['class']).to eq 'ChecksumTester'
-    expect(wf.config['tasks'][1]['tasks'][0]['recursive']).to eq true
-    expect(wf.config['tasks'][1]['tasks'][1]['class']).to eq 'CamelizeName'
-    expect(wf.config['tasks'][1]['tasks'][1]['recursive']).to eq true
-  end
-
   # noinspection RubyResolve
   it 'find run' do
     run
@@ -194,6 +198,8 @@ STR
   it 'move item in relation' do
     item = run.items.first
     sub_item = item.items.first
+    expect(run.size).to eq 1
+    expect(item.size).to eq 4
     run.move_item(sub_item)
     expect(run.size).to eq 2
     expect(item.size).to eq 3

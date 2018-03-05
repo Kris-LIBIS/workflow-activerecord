@@ -5,10 +5,9 @@ require 'libis/tools/extend/hash'
 
 module Libis
   module Workflow
-    module ActiveRecprd
+    module ActiveRecord
 
-      class Workflow
-
+      class Workflow < ::ActiveRecord::Base
         include ::Libis::Workflow::Base::Workflow
         include ::Libis::Workflow::ActiveRecord::Base
 
