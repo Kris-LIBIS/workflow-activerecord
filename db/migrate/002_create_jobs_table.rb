@@ -1,13 +1,18 @@
 require 'libis/workflow/activerecord'
 
-class CreateWorkflowItemsTable < ActiveRecord::Migration[5.0]
+class CreateJobsTable < ActiveRecord::Migration[5.0]
 
   def change
+
     create_table :jobs do |t|
       t.string :type
       t.string :name
-      t.string :description
-      t.jsonb :input
+      t.text :description
+      if ActiveRecord::Base.connection.instance_values["config"][:adapter] == "postgresql"
+        t.jsonb :input, default: {}
+      else
+        t.json :input, default: {}
+      end
       t.string :run_object
       t.boolean :log_to_file, default: true
       t.boolean :log_each_run, default: true
@@ -16,12 +21,14 @@ class CreateWorkflowItemsTable < ActiveRecord::Migration[5.0]
       # noinspection RubyResolve
       t.integer :log_keep, default: 5
 
-      t.timestamps
+      t.references :workflow, foreign_key: {to_table: :workflows, on_delete: :cascade}
 
-      t.integer :run_id
-      t.integer :workflow_id
+      t.timestamps
     end
 
-    add_index :jobs, :workflow_id
+    if ActiveRecord::Base.connection.instance_values["config"][:adapter] == "postgresql"
+      add_index :jobs, :input, using: :gin
+    end
+
   end
 end

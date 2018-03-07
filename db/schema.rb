@@ -39,10 +39,9 @@ ActiveRecord::Schema.define do
     # noinspection RubyResolve
     t.integer :log_keep, default: 5
 
-    t.timestamps
-
     t.references :workflow, foreign_key: {to_table: :workflows, on_delete: :cascade}
-    t.integer :workflow_id
+
+    t.timestamps
   end
 
   if ActiveRecord::Base.connection.instance_values["config"][:adapter] == "postgresql"
@@ -62,6 +61,7 @@ ActiveRecord::Schema.define do
     end
     t.references :parent, foreign_key: {to_table: :work_items, on_delete: :cascade}
     t.references :job, foreign_key: {to_table: :jobs, on_delete: :cascade}
+
     t.timestamps
   end
 
