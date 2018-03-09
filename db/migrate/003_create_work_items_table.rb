@@ -7,22 +7,16 @@ class CreateWorkItemsTable < ActiveRecord::Migration[5.0]
     create_table :work_items do |t|
       t.string :type
       if ActiveRecord::Base.connection.instance_values["config"][:adapter] == "postgresql"
-        t.jsonb :properties
-        t.jsonb :options
-        t.jsonb :status_log
+        t.jsonb :properties, default: {}
+        t.jsonb :options, default: {}
       else
-        t.json :properties
-        t.json :options
-        t.json :status_log
+        t.json :properties, default: {}
+        t.json :options, default: {}
       end
       t.references :parent, foreign_key: {to_table: :work_items, on_delete: :cascade}
       t.references :job, foreign_key: {to_table: :jobs, on_delete: :cascade}
 
       t.timestamps
-    end
-
-    if ActiveRecord::Base.connection.instance_values["config"][:adapter] == "postgresql"
-      add_index :work_items, :status_log, using: :gin
     end
 
   end

@@ -1,7 +1,9 @@
 require 'coveralls'
 Coveralls.wear!
 
+# noinspection RubyResolve
 require 'bundler/setup'
+# noinspection RubyResolve
 Bundler.setup
 
 require 'rspec'
@@ -13,14 +15,17 @@ require 'stringio'
 RSpec.configure do |cfg|
 
   cfg.before :suite do
-    # noinspection RubyResolve
-    ::Libis::Workflow::ActiveRecord.configure do |cfg|
-      cfg.logger.appenders =
+    ::Libis::Workflow::ActiveRecord.configure do |config|
+      config.logger.appenders =
           ::Logging::Appenders.string_io('StringIO', layout: ::Libis::Tools::Config.get_log_formatter)
-      cfg.itemdir = File.join(File.dirname(__FILE__), 'items')
-      cfg.taskdir = File.join(File.dirname(__FILE__), 'tasks')
-      cfg.workdir = File.join(File.dirname(__FILE__), 'work')
-      cfg.database_connect 'db/config.yml', :test
+      # noinspection RubyResolve
+      config.itemdir = File.join(File.dirname(__FILE__), 'items')
+      # noinspection RubyResolve
+      config.taskdir = File.join(File.dirname(__FILE__), 'tasks')
+      # noinspection RubyResolve
+      config.workdir = File.join(File.dirname(__FILE__), 'work')
+      # noinspection RubyResolve
+      config.database_connect 'db/config.yml', :test
     end
     DatabaseCleaner.clean_with :truncation
   end

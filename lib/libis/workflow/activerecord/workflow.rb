@@ -11,6 +11,8 @@ module Libis
         include ::Libis::Workflow::Base::Workflow
         include ::Libis::Workflow::ActiveRecord::Base
 
+        serialize :input, Libis::Workflow::ActiveRecord::Helpers::HashSerializer
+
         # noinspection RailsParamDefResolve
         has_many :jobs,
                  -> {order('id')},

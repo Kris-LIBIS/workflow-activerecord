@@ -164,6 +164,7 @@ describe 'TestWorkItem' do
 
     it 'updated' do
       item.set_status('abc', :DONE)
+      item.reload
       expect(item.status_log.size).to be 1
       status_entry = item.status_log[0]
       expect(status_entry[:task]).to eql 'abc'
@@ -184,6 +185,7 @@ describe 'TestWorkItem' do
 
       it 'updated' do
         item.status_progress('def', 3, 10)
+        item.reload
         expect(item.status_log.size).to be 2
         status_entry = item.status_log[1]
         expect(status_entry[:task]).to eql 'def'

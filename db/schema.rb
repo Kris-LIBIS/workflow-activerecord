@@ -51,13 +51,11 @@ ActiveRecord::Schema.define do
   create_table :work_items, force: :cascade do |t|
     t.string :type
     if ActiveRecord::Base.connection.instance_values["config"][:adapter] == "postgresql"
-      t.jsonb :properties
-      t.jsonb :options
-      t.jsonb :status_log
+      t.jsonb :properties, default: {}
+      t.jsonb :options, default: {}
     else
-      t.json :properties
-      t.json :options
-      t.json :status_log
+      t.json :properties, default: {}
+      t.json :options, default: {}
     end
     t.references :parent, foreign_key: {to_table: :work_items, on_delete: :cascade}
     t.references :job, foreign_key: {to_table: :jobs, on_delete: :cascade}
@@ -65,8 +63,18 @@ ActiveRecord::Schema.define do
     t.timestamps
   end
 
-  if ActiveRecord::Base.connection.instance_values["config"][:adapter] == "postgresql"
-    add_index :work_items, :status_log, using: :gin
+  create_table :statuses, force: :cascade do |t|
+    t.string :task
+    t.string :status, limit: 12
+    t.integer :progress
+    t.integer :max
+    t.datetime :created
+    t.datetime :updated
+
+    t.references :work_item, foreign_key: {to_table: :work_items, on_delete: :cascade}
+
   end
+
+  add_index :statuses, [:task, :id]
 
 end

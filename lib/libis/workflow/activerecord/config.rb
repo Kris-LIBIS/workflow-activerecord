@@ -25,6 +25,8 @@ module Libis
 
       Config[:log_dir] = '.'
 
+      Config[:db_dir] = File.join(File.dirname(__FILE__),'..', '..', '..', '..', 'db')
+
     end
   end
 end

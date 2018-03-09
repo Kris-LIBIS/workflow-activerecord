@@ -1,3 +1,4 @@
+# noinspection RubyResolve
 require 'bundler/gem_tasks'
 require 'rspec/core/rake_task'
 
@@ -6,7 +7,9 @@ RSpec::Core::RakeTask.new('spec')
 desc 'run tests'
 task :default => :spec
 
+# noinspection RubyResolve
 require 'yaml'
+# noinspection RubyResolve
 require 'logger'
 require 'active_record'
 

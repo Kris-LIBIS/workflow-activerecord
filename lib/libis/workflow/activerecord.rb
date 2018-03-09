@@ -14,6 +14,7 @@ module Libis
       autoload :Job, 'libis/workflow/activerecord/job'
       autoload :Worker, 'libis/workflow/activerecord/worker'
       autoload :Workflow, 'libis/workflow/activerecord/workflow'
+      autoload :Status, 'libis/workflow/activerecord/status'
 
       def self.configure
         yield ::Libis::Workflow::ActiveRecord::Config.instance

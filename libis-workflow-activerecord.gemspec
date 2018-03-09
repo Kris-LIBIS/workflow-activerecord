@@ -6,6 +6,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'libis/workflow/activerecord/version'
 require 'date'
 
+# noinspection RubyResolve
 Gem::Specification.new do |spec|
   spec.name = 'libis-workflow-activerecord'
   spec.version = ::Libis::Workflow::ActiveRecord::VERSION
@@ -19,6 +20,7 @@ Gem::Specification.new do |spec|
   spec.homepage = 'https://github.com/libis/workflow-activerecord'
   spec.license = 'MIT'
 
+  # noinspection RubyResolve
   spec.platform = Gem::Platform::JAVA if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'jruby'
 
   spec.files = `git ls-files -z`.split("\0")

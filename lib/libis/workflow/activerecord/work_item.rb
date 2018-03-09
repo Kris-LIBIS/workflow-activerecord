@@ -20,7 +20,14 @@ module Libis
         # noinspection RubyArgCount
         serialize :properties, Libis::Workflow::ActiveRecord::Helpers::HashSerializer
         # noinspection RubyArgCount
-        serialize :status_log, Libis::Workflow::ActiveRecord::Helpers::StatusSerializer
+        # serialize :status_log, Libis::Workflow::ActiveRecord::Helpers::StatusSerializer
+        #
+        # noinspection RailsParamDefResolve
+        has_many :status_log,
+                 -> {order('id')},
+                 class_name: Libis::Workflow::ActiveRecord::Status.to_s,
+                 foreign_key: :work_item_id,
+                 autosave: true
 
         # noinspection RailsParamDefResolve
         has_many :items,
@@ -45,7 +52,6 @@ module Libis
           self.properties.each {|k, v| new_item.properties[k.to_sym] = v.dup}
           new_item.options = {}.with_indifferent_access
           self.options.each {|k, v| new_item.options[k.to_sym] = v.dup}
-          new_item.status_log = []
           yield new_item if block_given?
           new_item
         end
@@ -68,19 +74,34 @@ module Libis
         end
 
         def get_items
-          self.items
+          self.items.order(:id)
         end
 
         def get_item_list
-          self.items.to_a
+          get_items.to_a
         end
 
         protected
 
+        def save_log_entry(log_entry)
+          log_entry.save!
+          self.reload
+        end
+
+        def status_entry(task = nil)
+          task = task.namepath if task.is_a?(Libis::Workflow::Task)
+          return self.status_log.order(id: :asc).last if task.blank?
+          self.status_log.where(task: task).order(id: :asc).last
+        rescue Exception
+          nil
+        end
+
         def add_status_log(info)
-          # noinspection RubyResolve
-          self.status_log << info.with_indifferent_access
+          self.status_log.build(info)
           self.status_log.last
+          # noinspection RubyResolve
+          # self.status_log << info.with_indifferent_access
+          # self.status_log.last
         end
 
       end
