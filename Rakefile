@@ -15,7 +15,7 @@ require 'active_record'
 
 namespace :db do
   def create_database(config)
-    options = {:charset => 'utf8', :collation => 'utf8_unicode_ci'}
+    options = {:charset => 'utf8', :collation => 'en_IE.UTF-8'}
 
     create_db = lambda do |cfg|
       ActiveRecord::Base.establish_connection cfg.merge('database' => nil)
@@ -72,7 +72,7 @@ namespace :db do
   desc 'Migrate the database (options: VERSION=x, VERBOSE=false).'
   task :migrate => :configure_connection do
     ActiveRecord::Migration.verbose = true
-    ActiveRecord::Migrator.migrate MIGRATIONS_DIR, ENV['VERSION'] ? ENV['VERSION'].to_i : nil
+    ActiveRecord::MigrationContext.new(MIGRATIONS_DIR).migrate(ENV['VERSION'] ? ENV['VERSION'].to_i : nil)
   end
 
   desc 'Rolls the schema back to the previous version (specify steps w/ STEP=n).'

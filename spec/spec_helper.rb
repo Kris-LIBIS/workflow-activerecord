@@ -14,6 +14,8 @@ require 'stringio'
 
 RSpec.configure do |cfg|
 
+  ActiveRecord::Migration.maintain_test_schema!
+
   cfg.before :suite do
     ::Libis::Workflow::ActiveRecord.configure do |config|
       config.logger.appenders =

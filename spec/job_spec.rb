@@ -6,5 +6,4 @@ require_relative 'test_job'
 
 describe 'TestJob' do
 
-  context
 end
