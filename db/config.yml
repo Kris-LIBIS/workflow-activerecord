@@ -1,17 +1,18 @@
 default: &default
   adapter: postgresql
   encoding: utf-8
-  database: ingester
+  database: workflow
   host: localhost
   port: 5432
-  username: ingester
-  password: ingester
+  username: workflow
+  password: workflow
   # For details on connection pooling, see Rails configuration guide
   # http://guides.rubyonrails.org/configuring.html#database-pooling
   pool: 20
 
 development:
   <<: *default
+  database: workflow_dev
 
   # The specified database role being used to connect to postgres.
   # To create additional roles in postgres see `$ createuser --help`.
@@ -45,6 +46,7 @@ development:
 # Do not set this db to the same as development or production.
 test:
   <<: *default
+  database: workflow_test
   min_messages: warning
 
 # As with config/secrets.yml, you never want to store sensitive information,
