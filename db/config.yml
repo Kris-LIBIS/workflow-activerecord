@@ -1,11 +1,11 @@
 default: &default
   adapter: postgresql
   encoding: utf-8
-  database: upload
+  database: ingester
   host: localhost
   port: 5432
-  username: upload
-  password: upload
+  username: ingester
+  password: ingester
   # For details on connection pooling, see Rails configuration guide
   # http://guides.rubyonrails.org/configuring.html#database-pooling
   pool: 20

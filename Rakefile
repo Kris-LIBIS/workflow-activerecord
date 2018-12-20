@@ -12,10 +12,11 @@ require 'yaml'
 # noinspection RubyResolve
 require 'logger'
 require 'active_record'
+require 'database_cleaner'
 
-namespace :db do
+namespace(:db) do
   def create_database(config)
-    options = {:charset => 'utf8', :collation => 'utf8_unicode_ci'}
+    options = {:charset => 'utf8', :collation => 'en_US.UTF-8'}
 
     create_db = lambda do |cfg|
       ActiveRecord::Base.establish_connection cfg.merge('database' => nil)
@@ -67,6 +68,12 @@ namespace :db do
   desc 'Drops the database for the current DATABASE_ENV'
   task :drop => :configure_connection do
     ActiveRecord::Base.connection.drop_database @config['database']
+  end
+
+  desc 'Clears the database and reloads the default setup'
+  task :clear => :configure_connection do
+    DatabaseCleaner.strategy = :truncation
+
   end
 
   desc 'Migrate the database (options: VERSION=x, VERBOSE=false).'
