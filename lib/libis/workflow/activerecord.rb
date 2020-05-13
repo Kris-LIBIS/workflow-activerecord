@@ -12,7 +12,6 @@ module Libis
       autoload :WorkItem, 'libis/workflow/activerecord/work_item'
       autoload :Run, 'libis/workflow/activerecord/run'
       autoload :Job, 'libis/workflow/activerecord/job'
-      autoload :Worker, 'libis/workflow/activerecord/worker'
       autoload :Workflow, 'libis/workflow/activerecord/workflow'
       autoload :Status, 'libis/workflow/activerecord/status'
 
